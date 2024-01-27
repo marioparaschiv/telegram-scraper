@@ -1,13 +1,8 @@
 {
+	"channel": "-1001598791715",
 	"phone": "+447700000000",
-	"debug": false,
 	"api": {
 		"id": 12345,
 		"hash": "daf10e69gdsjkca6247618ac3d0d5352b"
-	},
-	"channel": "-1001598791715",
-	"errors": {
-		"catch": true,
-		"webhook": "https://canary.discord.com/api/webhooks/123/123"
 	}
 }

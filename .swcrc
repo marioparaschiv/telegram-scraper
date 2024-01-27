@@ -9,28 +9,12 @@
 		"externalHelpers": false,
 		"parser": {
 			"syntax": "typescript",
-			"tsx": true,
-			"decorators": true,
-			"dynamicImport": false
+			"tsx": true
 		},
-		"target": "es2022",
+		"target": "esnext",
 		"minify": {
-			"compress": {
-				"booleans_as_integers": true,
-				"dead_code": true,
-				"unused": true,
-				"ecma": "2022",
-				"reduce_vars": true,
-				"reduce_funcs": true,
-				"keep_classnames": true,
-				"keep_fargs": false,
-				"keep_fnames": true
-			},
-			"mangle": {
-				"keepClassNames": true,
-				"keepFnNames": true,
-				"keepPrivateProps": true
-			}
+			"compress": true,
+			"mangle": true
 		},
 		"transform": {
 			"react": {
@@ -39,29 +23,11 @@
 		},
 		"baseUrl": "src",
 		"paths": {
-			"@utilities": [
-				"utilities/index.ts"
-			],
-			"@utilities/*": [
-				"utilities/*"
-			],
-			"@config": [
-				"../config.json"
-			],
-			"@constants": [
-				"constants.ts"
-			],
-			"@lib/*": [
-				"lib/*"
-			],
-			"@lib": [
-				"lib/index.ts"
-			],
-			"@typings/*": [
-				"../typings/*"
-			],
-			"@src/*": [
+			"~/*": [
 				"*"
+			],
+			"#config": [
+				"../config.json"
 			]
 		}
 	}
