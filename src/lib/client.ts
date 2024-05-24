@@ -1,5 +1,5 @@
 import { ClientOptions, SessionName } from '~/constants';
-import { Api, TelegramClient } from 'telegram';
+import { TelegramClient } from 'telegram';
 import config from '#config';
 import input from 'input';
 import path from 'path';
@@ -22,28 +22,67 @@ class Client extends TelegramClient {
 
 		const dialogs = await this.getDialogs();
 		const groups = dialogs.filter(d => d.isChannel || d.isGroup);
-		this.logger.info(`» Getting information for channel ${config.channel}...`);
+		this.logger.info(`Getting information for channel ${config.channel}...`);
 
 		const group = groups.find(g => g.id.toString() === config.channel);
 		if (!group) return this.logger.error('Group not found.');
 
+
 		try {
 			const participants = await this.getParticipants(group.entity);
-
-			const result = [];
+			const results: {
+				[key: string]: {
+					messages: {
+						sentAt: string,
+						text: string;
+					}[],
+					identifier: string;
+				};
+			} = {};
 
 			for (const participant of participants) {
-				const { fullUser } = await this.invoke(new Api.users.GetFullUser({ id: participant.id }));
-				const { about } = fullUser;
-
-				const twitter = about?.match(/http(|s):\/\/(twitter|x)\.com\/(#!\/)?\w+/gmi);
-				const twitters = twitter?.join(', ');
-
-				result.push(`${participant.username} (${participant.firstName ?? ''} ${participant.lastName ?? ''}) ${twitters ? `- (${twitters})` : about ? `- (${about})` : ''}`);
+				results[participant.id.toString()] = {
+					messages: [],
+					identifier: [
+						`${participant.username}`,
+						(participant.firstName || participant.lastName) && `(${participant.firstName ?? ''}${participant.lastName ? ' ' + participant.lastName : ''})`,
+						`(${participant.id})`
+					].filter(Boolean).join(' ')
+				};
 			}
 
-			const file = path.join(__dirname, '..', '..', 'users.txt');
-			fs.writeFileSync(file, result.join('\n'), 'utf-8');
+
+			const senders = Object.keys(results);
+
+			for await (const message of this.iterMessages(group.entity)) {
+				try {
+					const sender = await message.getSender();
+					if (!sender) continue;
+
+					const matches = senders.find(s => s === sender.id.toString());
+					if (!matches) continue;
+
+					results[matches] ??= { messages: [], identifier: '' };
+					results[matches].messages.push({ text: message.text, sentAt: new Date(message.date * 1000).toLocaleString() });
+				} catch { }
+			}
+
+			const root = path.join(__dirname, '..', '..');
+			const folder = path.join(root, 'results');
+			const file = path.join(folder, 'users.txt');
+			const messages = path.join(folder, 'messages');
+
+			if (!fs.existsSync(folder)) fs.mkdirSync(folder);
+			if (!fs.existsSync(messages)) fs.mkdirSync(messages);
+
+			fs.writeFileSync(file, Object.values(results).map(i => i.identifier).join('\n'), 'utf-8');
+
+			for (const id of Object.keys(results)) {
+				const msgs = results[id] as typeof results[typeof id];
+				const txt = path.join(messages, `${id}.txt`);
+
+				fs.writeFileSync(txt, msgs.messages.map(m => `${m.text} - ${m.sentAt}`).join('\n\n'));
+			}
 
 			this.logger.info('Save participants for: ' + config.channel);
 		} catch (error) {
@@ -52,7 +91,7 @@ class Client extends TelegramClient {
 		}
 
 		await this.disconnect();
-		process.exit(-1);
+		process.exit(0);
 	}
 }
 

@@ -5,3 +5,4 @@ files
 config.json
 users.txt
 .env
+results

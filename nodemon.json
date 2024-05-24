@@ -4,6 +4,8 @@
 	"ignore": [
 		"dist",
 		".git",
-		"node_modules"
+		"node_modules",
+		"results",
+		"users.txt"
 	]
 }
